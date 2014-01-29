@@ -201,7 +201,7 @@ class gitolite (
       "USER=${gitolite::user}",
     ],
     subscribe   => File["${gitolite::homedir}/${gitolite::user}.pub"],
-    command     => "gitolite setup -pk ${gitolite::user}.pub",
+    command     => "gitolite setup -a $dummy",
     cwd         => $gitolite::homedir,
     user        => $gitolite::user,
     group       => $gitolite::user,
