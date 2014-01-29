@@ -95,49 +95,37 @@ class gitolite (
   }
 
   if $packages {
-    Package {
-      ensure => "present",
-      before => Vcsrepo[$gitolite::srcdir],
-    }
-
-    package {
-      $gitolite::bashpkg:
-        ;
-      $gitolite::gitpkg:
-        require => Package[$gitolite::sshpkg];
-      $gitolite::perlpkg:
-        require => Package[$gitolite::bashpkg];
-      $gitolite::sshpkg:
-        require => Package[$gitolite::bashpkg];
-    }
+    ensure_packages([$gitolite::bashpkg, $gitolite::gitpkg, $gitolite::perlpkg, $gitolite::sshpkg])
   }
 
-  if $gitolite::password != 'undef'{
-    group {
-      $gitolite::user:
-        ensure => "present";
-    }
+  if $gitolite::password == 'undef'{
+    fail('Gitolite management user requires default password')
+  }
+
+  group {
+    $gitolite::user:
+      ensure => "present";
+  }
 
 
-    user {
-      $gitolite::user:
-        require  => Group[$gitolite::user],
-        ensure   => "present",
-        comment  => "Gitolite Hosting",
-        gid      => $gitolite::user,
-        home     => $gitolite::homedir,
-        password => $gitolite::password,
-        system   => true;
-    }
+  user {
+    $gitolite::user:
+      require  => Group[$gitolite::user],
+      ensure   => "present",
+      comment  => "Gitolite Hosting",
+      gid      => $gitolite::user,
+      home     => $gitolite::homedir,
+      password => $gitolite::password,
+      system   => true;
+  }
 
-    file {
-      $gitolite::homedir:
-        require => User[$gitolite::user],
-        ensure  => "directory",
-        owner   => $gitolite::user,
-        group   => $gitolite::user,
-        mode    => 750;
-    }
+  file {
+    $gitolite::homedir:
+      require => User[$gitolite::user],
+      ensure  => "directory",
+      owner   => $gitolite::user,
+      group   => $gitolite::user,
+      mode    => 750;
   }
 
   vcsrepo {
@@ -146,8 +134,7 @@ class gitolite (
       ensure   => "present",
       source   => $gitolite::source,
       revision => $gitolite::version,
-      owner    => $gitolite::nonrootinstallmethod ? { true  => $gitolite::user, default => "root" },
-      group    => $gitolite::nonrootinstallmethod ? { true  => $gitolite::user, default => "root" },
+      require  => Package[$gitolite::gitpkg],
   }
 
   file { "${gitolite::homedir}/${gitolite::user}.pub":
@@ -169,8 +156,8 @@ class gitolite (
       require => User[$gitolite::user],
     }
   }
-   
-  
+
+
   if $rcfile {
     class { "gitolite::rc":
       umask           => $umask,
@@ -222,7 +209,6 @@ class gitolite (
     path        => ["${gitolite::homedir}/bin", '/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin'],
     refreshonly => true,
   }
-
 
 }
 #
