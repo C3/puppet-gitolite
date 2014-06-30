@@ -125,7 +125,7 @@ class gitolite (
       ensure  => "directory",
       owner   => $gitolite::user,
       group   => $gitolite::user,
-      mode    => 750;
+      mode    => '0750';
   }
 
   vcsrepo {
